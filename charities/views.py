@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsCharityOwner, IsBenefactor
-from charities.models import Task
+from charities.models import Benefactor, Task
 from charities.serializers import (
     TaskSerializer, CharitySerializer, BenefactorSerializer
 )
@@ -73,7 +73,29 @@ class Tasks(generics.ListCreateAPIView):
 
 
 class TaskRequest(APIView):
-    pass
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, task_id):
+        task = get_object_or_404(Task, id=task_id)
+        if task.state != 'P':
+            return Response(data={'detail': 'This task is not pending.'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            benefactor = Benefactor.objects.get(user=request.user)
+        except Benefactor.DoesNotExist:
+            return Response(
+                {'detail': 'You are not a benefactor.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        task.state = 'W'
+        task.assigned_benefactor = benefactor
+        task.save()
+
+        return Response(
+            {'detail': 'Request sent.'},
+            status=status.HTTP_200_OK
+        )
 
 
 class TaskResponse(APIView):
