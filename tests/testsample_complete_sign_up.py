@@ -37,6 +37,7 @@ class TestAll(TestCase):
             "experience": "2",
             "free_time_per_week": "5"
         }, format='json', **header)
+        print(self.client)
         benefactor = Benefactor.objects.first()
         self.assertEqual(benefactor.user, self.account1)
         self.assertEqual(benefactor.experience, 2)
